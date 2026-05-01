@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MASTI Chat</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",sans-serif;}
+
+body{
+    background:#111b21;
+    color:white;
+}
+
+/* ===== SPLASH ===== */
+.splash{
+    position:fixed;
+    width:100%;
+    height:100%;
+    background:#0b141a;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    z-index:999;
+}
+
+.warning{
+    color:#ff4d4d;
+    font-weight:bold;
+    margin:15px 0;
+}
+
+.btn{
+    padding:10px 20px;
+    background:#25D366;
+    border:none;
+    border-radius:20px;
+    cursor:pointer;
+}
+
+/* ===== APP ===== */
+.app{
+    display:none;
+    height:100vh;
+}
+
+/* HEADER */
+.header{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px;
+    background:#202c33;
+}
+
+.menu{
+    font-size:20px;
+    cursor:pointer;
+}
+
+/* SIDEBAR */
+.sidebar{
+    position:fixed;
+    left:-280px;
+    top:0;
+    width:260px;
+    height:100%;
+    background:#202c33;
+    transition:0.3s;
+    z-index:1000;
+    overflow-y:auto;
+}
+
+.sidebar.active{
+    left:0;
+}
+
+.user{
+    padding:12px;
+    display:flex;
+    justify-content:space-between;
+    cursor:pointer;
+}
+.user:hover{background:#2a3942;}
+
+.count{color:#25D366;font-size:12px;}
+
+/* OVERLAY */
+.overlay{
+    position:fixed;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.5);
+    display:none;
+    z-index:999;
+}
+.overlay.active{
+    display:block;
+}
+
+/* MAIN */
+.main{
+    display:flex;
+    flex-direction:column;
+    height:100%;
+}
+
+/* SEARCH */
+.topbar{
+    padding:10px;
+    background:#0b141a;
+}
+
+.topbar input{
+    width:100%;
+    padding:10px;
+    border-radius:8px;
+    border:none;
+    background:#202c33;
+    color:white;
+}
+
+/* CHAT */
+.chat{
+    flex:1;
+    overflow-y:auto;
+    padding:10px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+
+.date{
+    text-align:center;
+    font-size:12px;
+    color:#ccc;
+}
+
+.msg{
+    max-width:75%;
+    padding:8px;
+    border-radius:8px;
+    font-size:14px;
+}
+
+.left{background:#202c33;align-self:flex-start;}
+.right{background:#005c4b;align-self:flex-end;}
+
+.sender{font-size:12px;color:#25D366;}
+.time{font-size:10px;color:#ccc;float:right;}
+</style>
+</head>
+
+<body>
+
+<!-- SPLASH -->
+<div class="splash" id="splash">
+    <h1>💬 MASTI TIME</h1>
+    <div class="warning">⚠️ MASTI GROUP KO LEKAR CHUD GAYE GURU</div>
+    <button class="btn" onclick="startApp()">Enter Chat</button>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <h3 style="padding:15px;">Users</h3>
+    <div id="userList"></div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+    
+    <div class="main">
+
+        <div class="header">
+            <div class="menu" onclick="openSidebar()">☰</div>
+            <div>💬 Chat Viewer</div>
+        </div>
+
+        <div class="topbar">
+            <input type="text" id="search" placeholder="Search...">
+        </div>
+
+        <div class="chat" id="chatBox"></div>
+
+    </div>
+
+</div>
+
+<script>
+
+// ===== START =====
+function startApp(){
+    document.getElementById("splash").style.display="none";
+    document.getElementById("app").style.display="block";
+}
+
+// ===== SIDEBAR =====
+function openSidebar(){
+    document.getElementById("sidebar").classList.add("active");
+    document.getElementById("overlay").classList.add("active");
+}
+
+function closeSidebar(){
+    document.getElementById("sidebar").classList.remove("active");
+    document.getElementById("overlay").classList.remove("active");
+}
+
+// ===== CHAT DATA =====
+const RAW_CHAT = `16/01/2026, 8:38 pm - Messages and calls are end-to-end encrypted. Only people in this chat can read, listen to, or share them. *Learn more*
+20/05/2025, 12:14 pm - Sandeep Sir Rxpl created group "MASTI TIME"
+20/05/2025, 12:14 pm - You were added
+29/01/2026, 6:38 pm - Sandeep Sir Rxpl added Aakash Sir Response Express
+02/02/2026, 9:26 am - Ritik Sir Rxpl: https://www.instagram.com/reel/DULZ85ik8cC/?igsh=MTE0Z3lwODk3cGZrYg==
+02/02/2026, 7:25 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+02/02/2026, 7:27 pm - Ritik Sir Rxpl: gaand mara🖕
+03/02/2026, 9:42 am - Ritik Sir Rxpl: <Media omitted>
+03/02/2026, 10:05 am - Sandeep Sir Rxpl: <Media omitted>
+03/02/2026, 10:11 am - Naveen Sir Rxpl: <Media omitted>
+03/02/2026, 11:17 am - Vishnu Dixit Rx Dixit Rx: Politics on in response xpress
+03/02/2026, 11:18 am - Sandeep Sir Rxpl: Yes
+03/02/2026, 11:18 am - Sandeep Sir Rxpl: Baat sari Ragister pe dal di gyi hai
+03/02/2026, 11:18 am - Sandeep Sir Rxpl: Entery hai to out kyo nahi
+03/02/2026, 11:22 am - Vishnu Dixit Rx Dixit Rx: Kyuki hum chutiye hai
+03/02/2026, 11:26 am - Ritik Sir Rxpl: Tum pr hi debit ayegi
+
+Qki sir bol rahe hai Tmhre upr liabilities nahi hai😂😂
+03/02/2026, 11:30 am - Aakash Sir Response Express: Bechara mohit
+03/02/2026, 11:31 am - Aakash Sir Response Express: Jhaant si salary
+Pahad di zimmedari
+03/02/2026, 11:40 am - Ritik Sir Rxpl: हमारी ऑडिट चल रही है 
+
+और वो ऑडिट कमिश्नर *Mr Akash Kashyap* है 
+
+जो की दाबा के पैसे काट रहा है सबके
+03/02/2026, 11:44 am - Aakash Sir Response Express: Laadle
+03/02/2026, 11:44 am - Aakash Sir Response Express: Muh m lele
+03/02/2026, 11:44 am - Aakash Sir Response Express: 2 baat
+03/02/2026, 11:44 am - Aakash Sir Response Express: Baar
+03/02/2026, 1:35 pm - Sandeep Sir Rxpl: Khana
+03/02/2026, 1:35 pm - Sandeep Sir Rxpl: @⁨Vishnu Dixit Rx Dixit Rx⁩
+03/02/2026, 1:35 pm - Aakash Sir Response Express: Ok
+03/02/2026, 4:17 pm - Mahesh Sir: This message was deleted
+03/02/2026, 4:17 pm - Mahesh Sir: This message was deleted
+03/02/2026, 4:18 pm - Mahesh Sir: This message was deleted
+03/02/2026, 4:18 pm - Mahesh Sir: This message was deleted
+03/02/2026, 4:18 pm - Mahesh Sir: This message was deleted
+03/02/2026, 4:18 pm - Mahesh Sir: This message was deleted
+03/02/2026, 4:18 pm - Aakash Sir Response Express: Tumhari to gaand marni chahiye
+03/02/2026, 4:18 pm - Aakash Sir Response Express: 49000 nahi balki uska 2x deduct hona chahiye
+03/02/2026, 5:18 pm - Ritik Sir Rxpl: https://www.instagram.com/reel/DULmFRZASTt/?igsh=MW8xdWhyZWpmcHBscw==
+03/02/2026, 5:22 pm - Ritik Sir Rxpl: https://www.instagram.com/reel/DPeA12SE2tM/?igsh=MWsxbXZwYWU4YW1tOA==
+03/02/2026, 5:23 pm - Ritik Sir Rxpl: https://www.instagram.com/reel/DSbgWmhgYnH/?igsh=bHh2MDF3Z3JzZDh4
+03/02/2026, 5:24 pm - Ritik Sir Rxpl: https://www.instagram.com/reel/DUC_tCtiOAB/?igsh=cXR0b2N0MGVocmZt
+03/02/2026, 5:25 pm - Ritik Sir Rxpl: https://www.instagram.com/reel/DOyZ1sBkxTS/?igsh=MmJvaDBheHp2ZHdx
+03/02/2026, 5:26 pm - Ritik Sir Rxpl: https://www.instagram.com/reel/DPQpfywCKY5/?igsh=MTN2NHR3bXJzaGg5dg==
+03/02/2026, 7:34 pm - Ritik Sir Rxpl: <Media omitted>
+04/02/2026, 11:45 am - Ritik Sir Rxpl: <Media omitted>
+04/02/2026, 12:01 pm - Aakash Sir Response Express: Waah re madarchod
+04/02/2026, 12:01 pm - Aakash Sir Response Express: Bohot kaam h
+04/02/2026, 12:18 pm - Ritik Sir Rxpl: Bahut hi jada kaam hai
+
+Tabhi relief lene gaya tha
+04/02/2026, 1:43 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+04/02/2026, 1:43 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+04/02/2026, 1:43 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+04/02/2026, 1:43 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+04/02/2026, 1:45 pm - Aakash Sir Response Express: 🤣🤣🤣
+04/02/2026, 1:45 pm - Ritik Sir Rxpl: Yei mst hai
+04/02/2026, 2:15 pm - Ritik Sir Rxpl: <Media omitted>
+04/02/2026, 7:20 pm - Ritik Sir Rxpl: <Media omitted>
+04/02/2026, 10:24 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+04/02/2026, 10:47 pm - Sandeep Sir Rxpl: Beta, it’s resignation
+04/02/2026, 10:48 pm - Vishnu Dixit Rx Dixit Rx: Kya hai na 4 ho chuke hai 5th chal rha hai
+04/02/2026, 10:49 pm - Sandeep Sir Rxpl: Bdia
+04/02/2026, 10:49 pm - Sandeep Sir Rxpl: Sir bhi pee rahe hai
+04/02/2026, 10:49 pm - Sandeep Sir Rxpl: Very good
+04/02/2026, 10:49 pm - Sandeep Sir Rxpl: Or beta bhi
+04/02/2026, 10:49 pm - Vishnu Dixit Rx Dixit Rx: Nhi
+04/02/2026, 10:49 pm - Vishnu Dixit Rx Dixit Rx: Na beta or mummy only
+04/02/2026, 10:57 pm - Sandeep Sir Rxpl: Very good
+05/02/2026, 8:36 am - Vishnu Dixit Rx Dixit Rx: Aj sir jaldi nikl jaegnge
+05/02/2026, 8:36 am - Vishnu Dixit Rx Dixit Rx: Around 3-4
+05/02/2026, 8:51 am - Ritik Sir Rxpl: To sir ko jane se pahle
+
+Muhh me le lena unka
+05/02/2026, 10:04 am - Sandeep Sir Rxpl: Ayenge
+05/02/2026, 10:04 am - Sandeep Sir Rxpl: ??
+05/02/2026, 10:46 am - Vishnu Dixit Rx Dixit Rx: Yes
+05/02/2026, 2:18 pm - Ritik Sir Rxpl: mere laptop me video chl raha tha song
+Sir ne dekh liya
+05/02/2026, 2:20 pm - Sandeep Sir Rxpl: Very good
+05/02/2026, 2:55 pm - Vishnu Dixit Rx Dixit Rx: 👏
+05/02/2026, 2:56 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+05/02/2026, 2:56 pm - Vishnu Dixit Rx Dixit Rx: Gandi gadi pr achhi bate likh dete hai log
+05/02/2026, 2:57 pm - Ritik Sir Rxpl: GGJJJBBB🖕
+05/02/2026, 5:18 pm - Sandeep Sir Rxpl: This message was deleted
+05/02/2026, 5:19 pm - Ritik Sir Rxpl: 
+05/02/2026, 6:13 pm - Ritik Sir Rxpl: <Media omitted>
+05/02/2026, 6:26 pm - Aakash Sir Response Express: <Media omitted>
+06/02/2026, 3:42 pm - Mahesh Sir: <Media omitted>
+06/02/2026, 3:42 pm - Mahesh Sir: <Media omitted>
+06/02/2026, 3:42 pm - Mahesh Sir: <Media omitted>
+06/02/2026, 3:42 pm - Mahesh Sir: <Media omitted>
+06/02/2026, 3:42 pm - Mahesh Sir: <Media omitted>
+06/02/2026, 3:42 pm - Mahesh Sir: <Media omitted>
+06/02/2026, 3:42 pm - Mahesh Sir: @⁨Vishnu Dixit Rx Dixit Rx⁩
+06/02/2026, 3:42 pm - Mahesh Sir: @⁨Sandeep Sir Rxpl⁩
+06/02/2026, 3:42 pm - Mahesh Sir: @⁨Kanaiya Bhai Rxpl⁩
+06/02/2026, 3:42 pm - Mahesh Sir: @⁨Naveen Sir Rxpl⁩
+06/02/2026, 3:42 pm - Mahesh Sir: @⁨Aakash Sir Response Express⁩
+07/02/2026, 2:37 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+07/02/2026, 2:37 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+07/02/2026, 2:37 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+07/02/2026, 2:37 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+07/02/2026, 2:37 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+07/02/2026, 2:37 pm - Ritik Sir Rxpl: 💜
+07/02/2026, 2:38 pm - Ritik Sir Rxpl: 💙
+07/02/2026, 4:27 pm - Vishnu Dixit Rx Dixit Rx: Shadi kr le bhosdi wale
+07/02/2026, 5:01 pm - Sandeep Sir Rxpl: 67
+07/02/2026, 5:01 pm - Sandeep Sir Rxpl: Google pe dalo or enter maro
+07/02/2026, 5:02 pm - Mahesh Sir: ?
+07/02/2026, 7:05 pm - Kanaiya Bhai Rxpl: This message was deleted
+07/02/2026, 7:05 pm - Kanaiya Bhai Rxpl: This message was deleted
+07/02/2026, 7:05 pm - Sandeep Sir Rxpl: Waah
+07/02/2026, 7:05 pm - Kanaiya Bhai Rxpl: This message was deleted
+07/02/2026, 7:05 pm - Kanaiya Bhai Rxpl: This message was deleted
+07/02/2026, 7:05 pm - Kanaiya Bhai Rxpl: This message was deleted
+07/02/2026, 7:05 pm - Kanaiya Bhai Rxpl: This message was deleted
+07/02/2026, 7:06 pm - Kanaiya Bhai Rxpl: This message was deleted
+07/02/2026, 7:06 pm - Kanaiya Bhai Rxpl: This message was deleted
+07/02/2026, 7:06 pm - Ritik Sir Rxpl: Ache se diyo bsdk nahi to 1rs dunga mai
+07/02/2026, 7:07 pm - Kanaiya Bhai Rxpl: This message was deleted
+07/02/2026, 9:07 pm - Sandeep Sir Rxpl: <Media omitted>
+07/02/2026, 9:07 pm - Sandeep Sir Rxpl: After salry
+07/02/2026, 9:53 pm - Sandeep Sir Rxpl: <Media omitted>
+07/02/2026, 10:16 pm - Aakash Sir Response Express: Wah
+07/02/2026, 10:16 pm - Sandeep Sir Rxpl: Mst hai kabhi aao haveli pe khilaunga
+07/02/2026, 10:18 pm - Aakash Sir Response Express: Pakka aunga but jaya ke sath
+07/02/2026, 10:18 pm - Aakash Sir Response Express: Bol bulayega
+07/02/2026, 10:18 pm - Sandeep Sir Rxpl: Haa
+07/02/2026, 10:18 pm - Sandeep Sir Rxpl: Aja
+07/02/2026, 10:18 pm - Sandeep Sir Rxpl: Sath chalo
+07/02/2026, 10:18 pm - Aakash Sir Response Express: Ok
+07/02/2026, 10:18 pm - Aakash Sir Response Express: 2028 mein
+07/02/2026, 10:18 pm - Sandeep Sir Rxpl: Land lele
+07/02/2026, 10:18 pm - Sandeep Sir Rxpl: Same dikhte hai
+07/02/2026, 10:19 pm - Aakash Sir Response Express: Hahah but Khaa to tu raha h
+07/02/2026, 10:19 pm - Aakash Sir Response Express: Kyu @⁨Mahesh Sir⁩
+07/02/2026, 10:19 pm - Aakash Sir Response Express: @⁨Vishnu Dixit Rx Dixit Rx⁩ ?
+07/02/2026, 10:20 pm - Sandeep Sir Rxpl: <Media omitted>
+07/02/2026, 10:20 pm - Sandeep Sir Rxpl: <Media omitted>
+08/02/2026, 6:55 am - Ritik Sir Rxpl: Maine yei msg bd me dekha to gpay kr diya hu😂
+08/02/2026, 6:32 pm - Vishnu Dixit Rx Dixit Rx: Rajkumar ka call a rha tha
+08/02/2026, 6:32 pm - Vishnu Dixit Rx Dixit Rx: Mine nhi uthaya
+08/02/2026, 6:33 pm - Vishnu Dixit Rx Dixit Rx: Kyuki ( jo bole woh kundi khole)
+08/02/2026, 6:58 pm - Sandeep Sir Rxpl: Mene bhi
+08/02/2026, 6:58 pm - Aakash Sir Response Express: Good
+08/02/2026, 7:19 pm - Sandeep Sir Rxpl: Pickup le liye hoga mene email dekha
+08/02/2026, 7:41 pm - Vishnu Dixit Rx Dixit Rx: Ha
+08/02/2026, 8:03 pm - Ritik Sir Rxpl: Maje kro meri tarf se chhuti hai aaj ki sbki😂😂
+08/02/2026, 8:26 pm - Vishnu Dixit Rx Dixit Rx: Bhosdi ke aj sara PR khol diya sir ne
+08/02/2026, 8:26 pm - Vishnu Dixit Rx Dixit Rx: Kareeb 50 box
+08/02/2026, 9:06 pm - Ritik Sir Rxpl: Amber ke senior ka naam pata kr bs
+
+Phir dono ki gaand maar lunga
+
+😂
+08/02/2026, 10:06 pm - Ritik Sir Rxpl: <Media omitted>
+08/02/2026, 10:11 pm - Aakash Sir Response Express: Bhen k lode ye email chauhan ko ki h
+08/02/2026, 10:18 pm - Ritik Sir Rxpl: To tune TO me Outlook ko kyon rkha hai
+08/02/2026, 10:18 pm - Ritik Sir Rxpl: Or mujhe v
+08/02/2026, 10:18 pm - Ritik Sir Rxpl: Sandeep mahesh ko v <This message was edited>
+08/02/2026, 10:20 pm - Aakash Sir Response Express: Thoda sa behen ka loda h kya tu 
+Madarchod chod @⁨Ritik Sir Rxpl⁩ gannu 
+Bhosdi k
+Suar 
+
+Reply All kiya @⁨Ritik Sir Rxpl⁩ madarchod
+08/02/2026, 10:26 pm - Ritik Sir Rxpl: kyon kiya reply all
+mail krna nahi aata kya bhdwe
+
+nahi aata to resign maar de
+08/02/2026, 10:27 pm - Ritik Sir Rxpl: pata nahi hai kya jab reply all krte hai to apne bando ko CC me rkhte hai
+08/02/2026, 10:55 pm - Aakash Sir Response Express: Dunga but resign nahi 
+Tere muh par mutth
+08/02/2026, 11:03 pm - Ritik Sir Rxpl: Lnd le le mera 2 baar tu apni gaand me
+
+Need achi a jayegi
+08/02/2026, 11:03 pm - Ritik Sir Rxpl: Or study pr concentrate v krega
+09/02/2026, 9:33 am - Ritik Sir Rxpl: <Media omitted>
+09/02/2026, 1:21 pm - Vishnu Dixit Rx Dixit Rx: 20 min me a rha hu
+09/02/2026, 1:21 pm - Vishnu Dixit Rx Dixit Rx: Khana na khana
+09/02/2026, 1:21 pm - Vishnu Dixit Rx Dixit Rx: Agar kisi ne kha liya toh uski gand faad duga
+09/02/2026, 1:25 pm - Aakash Sir Response Express: Ok
+09/02/2026, 1:25 pm - Aakash Sir Response Express: Aa jao bsdk
+09/02/2026, 3:21 pm - Vishnu Dixit Rx Dixit Rx: Log pta nhi kese bimar pad jate hai mai toh apne ap ko allowed he nhi krta ki bimar padu logo ki 2 time ki khasi me gand fat gyi mai 104 bukhar me bhi office aya hu
+09/02/2026, 3:22 pm - Sandeep Sir Rxpl: bilkul sahi bat
+09/02/2026, 3:22 pm - Sandeep Sir Rxpl: kaha gya ghar
+09/02/2026, 3:22 pm - Sandeep Sir Rxpl: sone
+09/02/2026, 3:22 pm - Ritik Sir Rxpl: 🖕🏻yahin gaand me daal do sir ke
+09/02/2026, 3:36 pm - Vishnu Dixit Rx Dixit Rx: Haa
+11/02/2026, 4:06 pm - Vishnu Dixit Rx Dixit Rx: Maje kro
+11/02/2026, 4:06 pm - Vishnu Dixit Rx Dixit Rx: Daru pio
+11/02/2026, 4:06 pm - Vishnu Dixit Rx Dixit Rx: Sir nhi aenge
+11/02/2026, 4:07 pm - Vishnu Dixit Rx Dixit Rx: @⁨Ritik Sir Rxpl⁩
+11/02/2026, 4:07 pm - Ritik Sir Rxpl: LUND
+11/02/2026, 4:07 pm - Vishnu Dixit Rx Dixit Rx: Sach me
+11/02/2026, 4:07 pm - Vishnu Dixit Rx Dixit Rx: Nhi aenge sir
+11/02/2026, 4:07 pm - Ritik Sir Rxpl: to mere liye 10 ka namkeen lekr aa jaa
+11/02/2026, 4:48 pm - Ritik Sir Rxpl: <Media omitted>
+13/02/2026, 12:06 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+13/02/2026, 12:15 pm - Vishnu Dixit Rx Dixit Rx: Abhi mai the transporter me 1 hrs ho gya mujhe khada hua yaha 4 labour gadi khali kr rhi hai unme se kisi ne bhi abhi tak ek gali bhi nhi di hai kya hum en logo se bhi neech hai 
+
+DCP AKASH fly
+13/02/2026, 12:16 pm - Aakash Sir Response Express: Han
+13/02/2026, 12:16 pm - Aakash Sir Response Express: Hum Chodu CID se h na
+13/02/2026, 12:16 pm - Aakash Sir Response Express: Bina gali ke mujrim mante hu nahi h
+13/02/2026, 4:23 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+13/02/2026, 4:23 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+13/02/2026, 4:23 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+13/02/2026, 5:26 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+13/02/2026, 5:26 pm - Vishnu Dixit Rx Dixit Rx: 
+13/02/2026, 5:31 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+13/02/2026, 5:32 pm - Aakash Sir Response Express: Bhai
+13/02/2026, 5:32 pm - Aakash Sir Response Express: Main bhi aa raha hu
+13/02/2026, 5:33 pm - Ritik Sir Rxpl: <Media omitted>
+13/02/2026, 5:33 pm - Ritik Sir Rxpl: <Media omitted>
+13/02/2026, 5:34 pm - Aakash Sir Response Express: Madarchod Chodu CId me dhoka
+14/02/2026, 12:11 pm - Sandeep Sir Rxpl: @⁨Vishnu Dixit Rx Dixit Rx⁩ Dalle konsi gadi hai naam to bata do
+14/02/2026, 12:49 pm - Vishnu Dixit Rx Dixit Rx: Mujhe kya pta
+14/02/2026, 12:50 pm - Sandeep Sir Rxpl: aj tumse sabit kar diya kya tum dogle ho
+14/02/2026, 12:50 pm - Sandeep Sir Rxpl: amir sir akriti mam unke father unki beti or tum sab waha gand marwa rahe ho kya sec-20
+14/02/2026, 12:50 pm - Sandeep Sir Rxpl: toyota ke showroom me
+14/02/2026, 1:06 pm - Vishnu Dixit Rx Dixit Rx: Mai nhi hu
+14/02/2026, 1:06 pm - Vishnu Dixit Rx Dixit Rx: Boh sab honge pta nhi
+14/02/2026, 1:06 pm - Sandeep Sir Rxpl: dalle tum bhi wahi ho apni ankho se dekha tha
+14/02/2026, 1:06 pm - Sandeep Sir Rxpl: karo doglapanti
+14/02/2026, 1:08 pm - Vishnu Dixit Rx Dixit Rx: live location shared
+14/02/2026, 1:09 pm - Vishnu Dixit Rx Dixit Rx: Bas khush
+14/02/2026, 1:09 pm - Sandeep Sir Rxpl: Abhi nikle ho
+14/02/2026, 1:10 pm - Sandeep Sir Rxpl: Waha ke liye
+14/02/2026, 1:10 pm - Vishnu Dixit Rx Dixit Rx: Nhi
+14/02/2026, 1:10 pm - Vishnu Dixit Rx Dixit Rx: Yr
+14/02/2026, 2:22 pm - Vishnu Dixit Rx Dixit Rx: Daru pee rhe ho kya
+14/02/2026, 2:23 pm - Sandeep Sir Rxpl: haa
+14/02/2026, 2:23 pm - Sandeep Sir Rxpl: khatam hone wali hai
+14/02/2026, 2:23 pm - Vishnu Dixit Rx Dixit Rx: Kon si
+14/02/2026, 2:23 pm - Sandeep Sir Rxpl: Vodka
+14/02/2026, 2:24 pm - Sandeep Sir Rxpl: Full chadi hai hume
+14/02/2026, 2:24 pm - Sandeep Sir Rxpl: Bhand ekdam
+14/02/2026, 2:24 pm - Vishnu Dixit Rx Dixit Rx: Or leke au
+14/02/2026, 2:24 pm - Sandeep Sir Rxpl: half le ao
+14/02/2026, 2:24 pm - Vishnu Dixit Rx Dixit Rx: Kon si
+14/02/2026, 2:24 pm - Sandeep Sir Rxpl: Londaon lemon
+14/02/2026, 2:24 pm - Vishnu Dixit Rx Dixit Rx: Sec 8 pr milegi
+14/02/2026, 2:24 pm - Sandeep Sir Rxpl: <Media omitted>
+14/02/2026, 2:24 pm - Vishnu Dixit Rx Dixit Rx: ??
+14/02/2026, 2:24 pm - Sandeep Sir Rxpl: haa
+14/02/2026, 2:25 pm - Sandeep Sir Rxpl: Ajao or chakhna leke ana apna
+14/02/2026, 2:25 pm - Sandeep Sir Rxpl: yaha chiciekn hai olnly
+14/02/2026, 2:25 pm - Vishnu Dixit Rx Dixit Rx: Bsdk
+14/02/2026, 2:25 pm - Ritik Sir Rxpl: kurkure takatak wali or red bhujiya
+14/02/2026, 2:26 pm - Sandeep Sir Rxpl: haa
+14/02/2026, 2:26 pm - Sandeep Sir Rxpl: sab le ao
+14/02/2026, 2:26 pm - Sandeep Sir Rxpl: finger bhi
+14/02/2026, 2:26 pm - Ritik Sir Rxpl: or apni gaand ka baal chilwa kr aana
+
+gaand maarne ka v mann kar raha hai
+
+@⁨Vishnu Dixit Rx Dixit Rx⁩
+14/02/2026, 2:26 pm - Vishnu Dixit Rx Dixit Rx: Mai bar me ja rha hu
+14/02/2026, 2:26 pm - Sandeep Sir Rxpl: Gand lelo vishnu mahesh ki
+14/02/2026, 2:27 pm - Sandeep Sir Rxpl: ajao dalle maja ayega
+14/02/2026, 2:27 pm - Ritik Sir Rxpl: tu hai hi madharchod
+14/02/2026, 2:27 pm - Sandeep Sir Rxpl: humare pass
+14/02/2026, 2:27 pm - Sandeep Sir Rxpl: mst gane chal rahe hai
+14/02/2026, 2:27 pm - Vishnu Dixit Rx Dixit Rx: Aya
+14/02/2026, 2:27 pm - Sandeep Sir Rxpl: <Media omitted>
+14/02/2026, 2:27 pm - Mahesh Sir: AAPNE BAAP KI GAND DAW LAG DI YE SIKHAA MAINE TUJ+HE
+14/02/2026, 2:27 pm - Ritik Sir Rxpl: jaldi jo jo bola hai lekr aana
+14/02/2026, 2:28 pm - Sandeep Sir Rxpl: <Media omitted>
+14/02/2026, 4:56 pm - Sandeep Sir Rxpl: This message was deleted
+14/02/2026, 4:56 pm - Sandeep Sir Rxpl: This message was deleted
+14/02/2026, 4:56 pm - Sandeep Sir Rxpl: This message was deleted
+14/02/2026, 4:57 pm - Sandeep Sir Rxpl: This message was deleted
+14/02/2026, 4:58 pm - Ritik Sir Rxpl: Yes
+14/02/2026, 4:58 pm - Ritik Sir Rxpl: I want gaand
+14/02/2026, 4:58 pm - Ritik Sir Rxpl: Timing pls confirm
+14/02/2026, 4:58 pm - Sandeep Sir Rxpl: This message was deleted
+14/02/2026, 4:58 pm - Ritik Sir Rxpl: Done ✅
+14/02/2026, 4:59 pm - Ritik Sir Rxpl: I will pay you don't worry
+14/02/2026, 4:59 pm - Sandeep Sir Rxpl: This message was deleted
+14/02/2026, 4:59 pm - Sandeep Sir Rxpl: This message was deleted
+14/02/2026, 4:59 pm - Sandeep Sir Rxpl: ONLY
+14/02/2026, 4:59 pm - Ritik Sir Rxpl: Mai poori kr dunga Teri saari khayhideenin
+14/02/2026, 4:59 pm - Sandeep Sir Rxpl: This message was deleted
+14/02/2026, 5:00 pm - Aakash Sir Response Express: Waah
+14/02/2026, 5:00 pm - Aakash Sir Response Express: Aaj Sandeep Pittan
+14/02/2026, 5:00 pm - Aakash Sir Response Express: Apni gaand dega
+14/02/2026, 5:00 pm - Ritik Sir Rxpl: <Media omitted>
+14/02/2026, 5:01 pm - Sandeep Sir Rxpl: Land mera
+14/02/2026, 5:38 pm - Harshit Mukhraiya: 🤣🤣
+15/02/2026, 8:11 am - Vishnu Dixit Rx Dixit Rx: Kya ghatia daru hai sar dard kr rha
+15/02/2026, 8:11 am - Vishnu Dixit Rx Dixit Rx: Kuch kha bhi nhi paya raat me
+15/02/2026, 8:11 am - Vishnu Dixit Rx Dixit Rx: Aesa lag rha hai abhi ulti ho jaegi
+15/02/2026, 8:39 am - Sandeep Sir Rxpl: Nimbu pani
+15/02/2026, 8:42 am - Sandeep Sir Rxpl: Hume to dikkat nhi hui
+15/02/2026, 12:44 pm - Ritik Sir Rxpl: Abe laudiya tujhe drd usi soch kr aa raha hai daru ki koi galti nahi isme....
+
+Daaru bewafaa nahi hoti😌
+15/02/2026, 12:44 pm - Ritik Sir Rxpl: Uski shkl yd a Rahi hogi tabhi ulti aa raha hoga
+
+Right 😉
+15/02/2026, 5:02 pm - Vishnu Dixit Rx Dixit Rx: Bag bhosdi ke
+16/02/2026, 1:35 pm - Vishnu Dixit Rx Dixit Rx: Khana
+16/02/2026, 1:35 pm - Vishnu Dixit Rx Dixit Rx: @⁨Aakash Sir Response Express⁩
+16/02/2026, 1:35 pm - Vishnu Dixit Rx Dixit Rx: @⁨Ritik Sir Rxpl⁩
+16/02/2026, 1:38 pm - Ritik Sir Rxpl: A jao
+16/02/2026, 1:38 pm - Ritik Sir Rxpl: Urgent
+16/02/2026, 1:42 pm - Mahesh Sir: This message was deleted
+16/02/2026, 1:42 pm - Mahesh Sir: This message was deleted
+16/02/2026, 1:42 pm - Mahesh Sir: This message was deleted
+16/02/2026, 6:59 pm - Mahesh Sir: This message was deleted
+16/02/2026, 6:59 pm - Mahesh Sir: This message was deleted
+16/02/2026, 6:59 pm - Mahesh Sir: This message was deleted
+16/02/2026, 6:59 pm - Mahesh Sir: This message was deleted
+16/02/2026, 6:59 pm - Mahesh Sir: This message was deleted
+17/02/2026, 5:38 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+17/02/2026, 5:38 pm - Vishnu Dixit Rx Dixit Rx: A jao
+17/02/2026, 5:39 pm - Vishnu Dixit Rx Dixit Rx: 
+17/02/2026, 5:39 pm - Sandeep Sir Rxpl: Hat dalle
+17/02/2026, 5:41 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+17/02/2026, 5:42 pm - Vishnu Dixit Rx Dixit Rx: 🤤
+17/02/2026, 5:42 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+17/02/2026, 5:43 pm - Aakash Sir Response Express: M aa raha hu wait
+17/02/2026, 6:18 pm - Aakash Sir Response Express: <Media omitted>
+17/02/2026, 7:06 pm - Ritik Sir Rxpl: <Media omitted>
+18/02/2026, 2:57 pm - Naveen Sir Rxpl: <Media omitted>
+18/02/2026, 5:49 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+18/02/2026, 5:49 pm - Ritik Sir Rxpl: Kal wla photo hai
+18/02/2026, 5:49 pm - Ritik Sir Rxpl: Gaand me daamm hai to video call kt
+18/02/2026, 5:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+19/02/2026, 9:55 am - Ritik Sir Rxpl: This message was deleted
+19/02/2026, 9:56 am - Ritik Sir Rxpl: <Media omitted>
+19/02/2026, 10:12 am - Aakash Sir Response Express: Hahha
+19/02/2026, 5:58 pm - Ritik Sir Rxpl: <Media omitted>
+19/02/2026, 6:06 pm - Ritik Sir Rxpl: <Media omitted>
+19/02/2026, 6:07 pm - Ritik Sir Rxpl: <Media omitted>
+19/02/2026, 6:32 pm - Aakash Sir Response Express: Tumhari Gaand me dalunga ye hajmola
+19/02/2026, 8:01 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+20/02/2026, 3:04 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+20/02/2026, 3:04 pm - Vishnu Dixit Rx Dixit Rx: Mera bada ki anniversary hai
+20/02/2026, 3:04 pm - Vishnu Dixit Rx Dixit Rx: 🥳🥳
+20/02/2026, 5:41 pm - Vishnu Dixit Rx Dixit Rx: Hum nikl gye
+20/02/2026, 5:42 pm - Aakash Sir Response Express: M pahuch gya
+20/02/2026, 5:56 pm - Vishnu Dixit Rx Dixit Rx: Good
+20/02/2026, 5:56 pm - Vishnu Dixit Rx Dixit Rx: Khana khatam mat kr dena
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: 
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: 
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:13 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:14 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:14 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:14 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:14 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:14 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:14 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:14 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:14 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:14 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:15 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:15 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:15 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:15 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:15 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:15 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:15 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:15 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:15 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:15 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:15 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:15 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:21 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:21 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:21 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:21 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:21 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:21 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:21 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:21 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+20/02/2026, 7:27 pm - Sandeep Sir Rxpl: <Media omitted>
+21/02/2026, 9:03 am - Naveen Sir Rxpl: <Media omitted>
+21/02/2026, 9:09 am - Aakash Sir Response Express: Jarur
+21/02/2026, 9:14 am - Sandeep Sir Rxpl: Bhuk lgi h
+21/02/2026, 9:14 am - Sandeep Sir Rxpl: Kuchh le aao
+21/02/2026, 5:06 pm - Sandeep Sir Rxpl: This message was deleted
+21/02/2026, 5:06 pm - Aakash Sir Response Express: Aja
+21/02/2026, 5:06 pm - Ritik Sir Rxpl: BAHUT ACHE SE LUNGA
+21/02/2026, 5:06 pm - Ritik Sir Rxpl: KACCHII TO KHOLO AAPNI
+21/02/2026, 5:06 pm - Aakash Sir Response Express: Mujhe chahiye
+21/02/2026, 5:06 pm - Aakash Sir Response Express: Teri gaand
+21/02/2026, 5:06 pm - Ritik Sir Rxpl: Tel lagakr kr marunga
+21/02/2026, 5:07 pm - Aakash Sir Response Express: Fatal pe *नीलाम* karunga
+21/02/2026, 5:07 pm - Sandeep Sir Rxpl: 1500 rs
+21/02/2026, 5:07 pm - Aakash Sir Response Express: 150₹
+21/02/2026, 5:07 pm - Ritik Sir Rxpl: <Media omitted>
+21/02/2026, 5:07 pm - Sandeep Sir Rxpl: ok
+21/02/2026, 5:07 pm - Aakash Sir Response Express: नहीं नहीं 150₹ मात्र
+21/02/2026, 9:01 pm - Aakash Sir Response Express: This message was deleted
+21/02/2026, 9:01 pm - Aakash Sir Response Express: <Media omitted>
+21/02/2026, 9:41 pm - Sandeep Sir Rxpl: <Media omitted>
+22/02/2026, 2:04 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+22/02/2026, 2:04 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+22/02/2026, 2:07 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+23/02/2026, 9:00 am - Sandeep Sir Rxpl: <Media omitted>
+23/02/2026, 10:29 am - Harshit Mukhraiya: 🤣🤣🤣
+23/02/2026, 11:13 am - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+24/02/2026, 7:42 pm - Mahesh Sir: This message was deleted
+24/02/2026, 7:42 pm - Mahesh Sir: This message was deleted
+24/02/2026, 7:42 pm - Mahesh Sir: This message was deleted
+24/02/2026, 7:42 pm - Mahesh Sir: This message was deleted
+25/02/2026, 8:22 am - Vishnu Dixit Rx Dixit Rx: Aj sir HP jarnge fir waha se zomato jaenge
+25/02/2026, 8:22 am - Vishnu Dixit Rx Dixit Rx: Gupt suchna
+25/02/2026, 8:56 am - Sandeep Sir Rxpl: Waaah
+25/02/2026, 9:24 am - Ritik Sir Rxpl: <Media omitted>
+25/02/2026, 9:25 am - Sandeep Sir Rxpl: I am late
+25/02/2026, 9:25 am - Sandeep Sir Rxpl: Today
+25/02/2026, 9:50 am - Sandeep Sir Rxpl: <Media omitted>
+25/02/2026, 3:40 pm - Ritik Sir Rxpl: <Media omitted>
+25/02/2026, 3:59 pm - Ritik Sir Rxpl: <Media omitted>
+26/02/2026, 11:01 am - Aakash Sir Response Express: GandLotia University 
+https://youtu.be/VyRNot6poIY?si=Jgu3svg05U0htdky
+26/02/2026, 11:39 am - Sandeep Sir Rxpl: 
+26/02/2026, 11:39 am - Sandeep Sir Rxpl: 
+26/02/2026, 11:39 am - Sandeep Sir Rxpl: 
+26/02/2026, 1:28 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+26/02/2026, 5:23 pm - Ritik Sir Rxpl: <Media omitted>
+26/02/2026, 7:08 pm - Ritik Sir Rxpl: <Media omitted>
+26/02/2026, 7:15 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+26/02/2026, 7:15 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+26/02/2026, 7:17 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+26/02/2026, 7:33 pm - Aakash Sir Response Express: Waah bhen chod
+26/02/2026, 7:46 pm - Sandeep Sir Rxpl: Kc momo
+26/02/2026, 8:03 pm - Vishnu Dixit Rx Dixit Rx: Randi waji on top
+26/02/2026, 8:23 pm - Naveen Sir Rxpl: https://youtube.com/shorts/O9RgVAyeTJQ?si=cDQPPPW7jCg7H-hT
+27/02/2026, 12:07 am - Ritik Sir Rxpl: 
+27/02/2026, 12:07 am - Ritik Sir Rxpl: <Media omitted>
+27/02/2026, 12:07 am - Ritik Sir Rxpl: <Media omitted>
+27/02/2026, 12:07 am - Ritik Sir Rxpl: <Media omitted>
+27/02/2026, 12:07 am - Ritik Sir Rxpl: <Media omitted>
+27/02/2026, 12:07 am - Ritik Sir Rxpl: <Media omitted>
+27/02/2026, 12:07 am - Ritik Sir Rxpl: Don't worry sir
+27/02/2026, 12:07 am - Ritik Sir Rxpl: Not any advance payment
+27/02/2026, 12:07 am - Ritik Sir Rxpl: Mam will come on your hotel u see then pay
+27/02/2026, 12:07 am - Ritik Sir Rxpl: Kya bolte ho
+27/02/2026, 12:07 am - Ritik Sir Rxpl: Deal kr lu
+27/02/2026, 12:08 am - Ritik Sir Rxpl: @⁨Vishnu Dixit Rx Dixit Rx⁩ @⁨Aakash Sir Response Express⁩
+27/02/2026, 12:08 am - Aakash Sir Response Express: Teri Gaand Maar lega ye fraudster bsdk gannu
+
+Chhoti si 🍌 lulli me zyada khujli ho rahi h kya madarchod?
+27/02/2026, 12:08 am - Aakash Sir Response Express: Ja deewar pe jakar ragad le
+27/02/2026, 12:09 am - Ritik Sir Rxpl: 😂😂
+27/02/2026, 12:09 am - Ritik Sir Rxpl: Laudiya fraud kaise hain
+27/02/2026, 12:13 am - Aakash Sir Response Express: Ese hbsdk
+27/02/2026, 12:13 am - Aakash Sir Response Express: <Media omitted>
+27/02/2026, 12:13 am - Ritik Sir Rxpl: Ooo
+27/02/2026, 12:14 am - Aakash Sir Response Express: <Media omitted>
+27/02/2026, 12:15 am - Ritik Sir Rxpl: Tere ko kaise mil jaati hai bhai yei sb
+27/02/2026, 12:15 am - Aakash Sir Response Express: 🤣
+27/02/2026, 12:15 am - Ritik Sir Rxpl: Ek kaam kr padhai or job chhorke
+
+Sex racket me raid maara kr tu
+27/02/2026, 12:15 am - Ritik Sir Rxpl: Acha kama lega
+27/02/2026, 12:15 am - Ritik Sir Rxpl: 😂
+27/02/2026, 12:15 am - Aakash Sir Response Express: Bsdk Baap ese hi nhi hu m tera
+27/02/2026, 12:16 am - Aakash Sir Response Express: ACP Chodu CID se hu
+27/02/2026, 12:16 am - Ritik Sir Rxpl: Saale beta hai tu mera
+27/02/2026, 12:16 am - Aakash Sir Response Express: Din bhar main or DCP @⁨Vishnu Dixit Rx Dixit Rx⁩ ese hi porn sites nhi छानते
+27/02/2026, 12:16 am - Ritik Sir Rxpl: Haa yei to h
+27/02/2026, 12:17 am - Ritik Sir Rxpl: Benchod 8-10 jagh se msg a raha hai sbko block maar raha hu dhire dhire
+27/02/2026, 12:17 am - Ritik Sir Rxpl: 😂
+27/02/2026, 12:17 am - Aakash Sir Response Express: Hahhaa
+27/02/2026, 12:17 am - Aakash Sir Response Express: Teri gaand me ख़ुजाल ayi kese
+27/02/2026, 12:17 am - Ritik Sir Rxpl: Vishnu ne bola tha samalka me pta krne
+27/02/2026, 12:18 am - Ritik Sir Rxpl: To whi searching kiya tha
+27/02/2026, 12:18 am - Aakash Sir Response Express: Abe साले
+27/02/2026, 12:18 am - Ritik Sir Rxpl: Escorts services in samalka
+27/02/2026, 12:18 am - Aakash Sir Response Express: Ek kaam kar
+27/02/2026, 12:18 am - Aakash Sir Response Express: Wahsroom me ja or मुट्ठी maar le
+27/02/2026, 12:18 am - Ritik Sir Rxpl: Yahin last option hai
+27/02/2026, 12:18 am - Aakash Sir Response Express: 2 min me तेरा नशा गायब
+27/02/2026, 12:18 am - Ritik Sir Rxpl: Ab phle acha se ek video dekhkr jaunga
+27/02/2026, 12:18 am - Aakash Sir Response Express: फिर तू 2-3 महीने लग के काम करेगा
+27/02/2026, 12:19 am - Aakash Sir Response Express: Ok
+27/02/2026, 12:19 am - Ritik Sir Rxpl: Haa
+27/02/2026, 1:10 pm - Vishnu Dixit Rx Dixit Rx: Khana
+27/02/2026, 1:17 pm - Naveen Sir Rxpl: रोटी की खुशबू में छुपा है प्यार का एहसास,
+माँ के हाथों का खाना लगता है सबसे खास।
+
+दाल-चावल हो या हो पनीर की थाली,
+गर साथ हो अपने तो हर प्लेट निराली।
+
+भूख जब जोर से आवाज़ लगाती है,
+साधारण सी रोटी भी दावत बन जाती है।
+
+ज़िंदगी का असली मज़ा तो खाने में है,
+दिल से बना हो तो स्वाद हर दाने में है।
+
+मसालों की खुशबू, तड़के की बात,
+खाने से ही बनती है दिन की शुरुआत।
+28/02/2026, 11:04 am - Ritik Sir Rxpl: https://www.instagram.com/reel/DVQxJpHE663/?igsh=b24xcHdxY2YzZmMw
+28/02/2026, 11:34 am - Vishnu Dixit Rx Dixit Rx: Sir nhi aenge <This message was edited>
+28/02/2026, 11:35 am - Aakash Sir Response Express: Ok
+28/02/2026, 11:35 am - Ritik Sir Rxpl: bs yahin baat batane ki salary deta hu mai tumhe
+28/02/2026, 12:57 pm - Sandeep Sir Rxpl: https://www.instagram.com/reel/DVQFML1kva0/?igsh=aWcyZWlrOW03eTcw
+28/02/2026, 1:14 pm - Ritik Sir Rxpl: <Media omitted>
+28/02/2026, 1:19 pm - Sandeep Sir Rxpl: Mujhe dedo
+28/02/2026, 1:19 pm - Ritik Sir Rxpl: Rs 150
+28/02/2026, 1:20 pm - Sandeep Sir Rxpl: 130 INR Only
+28/02/2026, 1:20 pm - Ritik Sir Rxpl: Non-Negotiable
+28/02/2026, 1:44 pm - Ritik Sir Rxpl: 
+28/02/2026, 2:46 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/02/2026, 5:42 pm - Vishnu Dixit Rx Dixit Rx: <a href="https://www.eporner.com/video-IVhEhENXQyW/real-brother-sister-home-toilet-sex-mms/">Real Brother Step Sister Home Toilet Sex Mms</a>
+28/02/2026, 6:05 pm - Ritik Sir Rxpl: <Media omitted>
+01/03/2026, 6:18 pm - Sandeep Sir Rxpl: 
+02/03/2026, 12:46 pm - Vishnu Dixit Rx Dixit Rx: Khana khaye
+02/03/2026, 2:19 pm - Sandeep Sir Rxpl: <Media omitted>
+02/03/2026, 2:31 pm - Ritik Sir Rxpl: “आख़िर कहना क्या चाहते हो?”
+02/03/2026, 6:31 pm - Ritik Sir Rxpl: DCP @⁨Aakash Sir Response Express⁩  As per DCP Vishnu FROM Chodu CID Team
+
+Daaru Beer Kuch nahi hoga kal ki party me🥹🥹
+02/03/2026, 6:51 pm - Mahesh Sir: This message was deleted
+02/03/2026, 6:51 pm - Mahesh Sir: This message was deleted
+02/03/2026, 6:51 pm - Mahesh Sir: This message was deleted
+02/03/2026, 6:52 pm - Naveen Sir Rxpl: <Media omitted>
+02/03/2026, 6:52 pm - Sandeep Sir Rxpl: Very good
+02/03/2026, 6:52 pm - Sandeep Sir Rxpl: Free
+02/03/2026, 6:52 pm - Sandeep Sir Rxpl: Free
+02/03/2026, 6:52 pm - Sandeep Sir Rxpl: Free
+02/03/2026, 6:52 pm - Ritik Sir Rxpl: Ache se lunga 
+Teri chuchi dabake
+02/03/2026, 9:22 pm - Sandeep Sir Rxpl: <Media omitted>
+02/03/2026, 9:23 pm - Sandeep Sir Rxpl: Come baby
+02/03/2026, 10:12 pm - Harshit Mukhraiya: 
+02/03/2026, 10:52 pm - Aakash Sir Response Express: Abe ye 2 bachhe kiske kho gaye
+02/03/2026, 10:52 pm - Aakash Sir Response Express: @⁨Mahesh Sir⁩  ji dekh lo apne ladke ko
+02/03/2026, 10:58 pm - Harshit Mukhraiya: 🤣🤣
+02/03/2026, 10:58 pm - Harshit Mukhraiya: Mera baccha hai ye
+02/03/2026, 10:58 pm - Aakash Sir Response Express: Sahi h
+02/03/2026, 10:59 pm - Aakash Sir Response Express: Abe kitne bachho ko pareshan krega
+02/03/2026, 10:59 pm - Aakash Sir Response Express: Janta hu teri salary 10k h gyi h
+02/03/2026, 10:59 pm - Aakash Sir Response Express: 🤣🤣
+02/03/2026, 10:59 pm - Harshit Mukhraiya: Sir kum bata rhe ho aap
+02/03/2026, 11:00 pm - Harshit Mukhraiya: Jyada hai
+02/03/2026, 11:13 pm - Aakash Sir Response Express: Thik h 10200 m deal done kr
+03/03/2026, 12:18 am - Harshit Mukhraiya: Nhi sir
+03/03/2026, 12:18 am - Harshit Mukhraiya: 16k
+03/03/2026, 9:59 am - Ritik Sir Rxpl: <Media omitted>
+03/03/2026, 12:15 pm - Ritik Sir Rxpl: https://www.instagram.com/reel/DU0YLaSD_n6/?igsh=YnIwOTBxNmJwcTF1
+03/03/2026, 2:33 pm - Ritik Sir Rxpl: <Media omitted>
+03/03/2026, 3:35 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+03/03/2026, 3:35 pm - Sandeep Sir Rxpl: I know it
+03/03/2026, 3:35 pm - Sandeep Sir Rxpl: already told
+03/03/2026, 3:35 pm - Sandeep Sir Rxpl: BTW
+03/03/2026, 3:35 pm - Sandeep Sir Rxpl: FUCK
+03/03/2026, 3:36 pm - Sandeep Sir Rxpl: @⁨Aakash Sir Response Express⁩ ACP FY
+03/03/2026, 3:36 pm - Sandeep Sir Rxpl: khao tikki chaat
+03/03/2026, 3:36 pm - Aakash Sir Response Express: Hahah
+03/03/2026, 3:36 pm - Aakash Sir Response Express: Iska dahi ritik ki gaand pe dal dunga m
+03/03/2026, 3:36 pm - Sandeep Sir Rxpl: SAY IT AGAIN
+03/03/2026, 3:36 pm - Aakash Sir Response Express: Fir sandeep chaat lega
+03/03/2026, 3:36 pm - Sandeep Sir Rxpl: HOLI PARTY
+03/03/2026, 3:36 pm - Sandeep Sir Rxpl: NAHI
+03/03/2026, 3:36 pm - Sandeep Sir Rxpl: NAHI
+03/03/2026, 3:36 pm - Sandeep Sir Rxpl: LODA PARTY
+03/03/2026, 3:37 pm - Aakash Sir Response Express: Uff ye Loli Haye ye Loli
+03/03/2026, 3:38 pm - Sandeep Sir Rxpl: <Media omitted>
+03/03/2026, 3:39 pm - Sandeep Sir Rxpl: <Media omitted>
+03/03/2026, 3:39 pm - Aakash Sir Response Express: Ispe dahi laga ke chaat
+03/03/2026, 3:39 pm - Aakash Sir Response Express: 
+03/03/2026, 3:39 pm - Sandeep Sir Rxpl: @⁨Vishnu Dixit Rx Dixit Rx⁩ TERE LIYE
+03/03/2026, 3:41 pm - Sandeep Sir Rxpl: LAND 3 BAJE KA BOLA THA 4 BAJ RAHE HAI MUJHE LAGA THA 5 BAJE TAK GHAR CHALE JATE
+03/03/2026, 3:45 pm - Aakash Sir Response Express: Hn yr
+04/03/2026, 11:04 am - Aakash Sir Response Express: <Media omitted>
+04/03/2026, 11:54 am - Sandeep Sir Rxpl: <Media omitted>
+04/03/2026, 11:54 am - Sandeep Sir Rxpl: <Media omitted>
+04/03/2026, 12:43 pm - Harshit Mukhraiya: <Media omitted>
+04/03/2026, 12:43 pm - Harshit Mukhraiya: <Media omitted>
+04/03/2026, 12:48 pm - Aakash Sir Response Express: <Media omitted>
+04/03/2026, 12:48 pm - Aakash Sir Response Express: <Media omitted>
+04/03/2026, 12:48 pm - Aakash Sir Response Express: <Media omitted>
+04/03/2026, 2:00 pm - Aakash Sir Response Express: <Media omitted>
+04/03/2026, 4:00 pm - Sandeep Sir Rxpl: <Media omitted>
+04/03/2026, 4:07 pm - Sandeep Sir Rxpl: <Media omitted>
+05/03/2026, 6:44 pm - Naveen Sir Rxpl: https://www.instagram.com/reel/DVOHClfk7uD/?igsh=MWQzNWE1eHdkNTZuZQ==
+05/03/2026, 11:56 pm - Sandeep Sir Rxpl: <Media omitted>
+07/03/2026, 1:02 pm - Sandeep Sir Rxpl: 660+90 - INR 7-mar-2026
+07/03/2026, 1:03 pm - Ritik Sir Rxpl: 
+07/03/2026, 3:23 pm - Sandeep Sir Rxpl: Naveen   - 230
+Ritik - 240
+07/03/2026, 4:22 pm - Ritik Sir Rxpl: <Media omitted>
+07/03/2026, 4:25 pm - Ritik Sir Rxpl: <Media omitted>
+07/03/2026, 4:34 pm - Ritik Sir Rxpl: <Media omitted>
+07/03/2026, 8:14 pm - Aakash Sir Response Express: <Media omitted>
+07/03/2026, 8:26 pm - Ritik Sir Rxpl: <Media omitted>
+07/03/2026, 8:26 pm - Ritik Sir Rxpl: <Media omitted>
+07/03/2026, 8:37 pm - Aakash Sir Response Express: Bhai I'm gareeb
+07/03/2026, 8:39 pm - Ritik Sir Rxpl: I'm also
+07/03/2026, 8:39 pm - Ritik Sir Rxpl: Dost ki b'day party h
+09/03/2026, 1:07 pm - Harshit Mukhraiya: <Media omitted>
+09/03/2026, 1:10 pm - Sandeep Sir Rxpl: Petha leke ayio verna pitega
+09/03/2026, 1:13 pm - Harshit Mukhraiya: Sir this time I am coming with my owner whenever I will come again definitely will take for you.
+09/03/2026, 1:13 pm - Harshit Mukhraiya: I apologise for this
+09/03/2026, 1:26 pm - Sandeep Sir Rxpl: Laand mera
+09/03/2026, 1:53 pm - Harshit Mukhraiya: 😁😁
+09/03/2026, 7:38 pm - Ritik Sir Rxpl: https://www.instagram.com/reel/DVkghM3jBrG/?igsh=MWo5MmVhb3RwdXFndw==
+09/03/2026, 7:56 pm - Aakash Sir Response Express: Bsdk sasta gyan mat chod
+09/03/2026, 8:08 pm - Ritik Sir Rxpl: Sahi gyaan de raha hu bsdk
+10/03/2026, 8:00 pm - Naveen Sir Rxpl: https://www.instagram.com/reel/DVfTJzjkQqz/?igsh=eHRrMHdqNXhvdWhp
+10/03/2026, 8:17 pm - Naveen Sir Rxpl: https://www.instagram.com/reel/DVfdFeTE2ZU/?igsh=ODI4cHZkNzV3Y3V6
+11/03/2026, 9:29 am - Mahesh Sir: <Media omitted>
+11/03/2026, 9:29 am - Mahesh Sir: Good morning team
+11/03/2026, 10:19 am - Ritik Sir Rxpl: 🖕🏻good morning 🌞
+11/03/2026, 10:23 am - Ritik Sir Rxpl: <Media omitted>
+11/03/2026, 10:50 am - Mahesh Sir: <Media omitted>
+11/03/2026, 10:51 am - Mahesh Sir: <Media omitted>
+11/03/2026, 10:54 am - Sandeep Sir Rxpl: Rajkumar khush ho gya gand dedo usko ab
+11/03/2026, 10:54 am - Mahesh Sir: <Media omitted>
+11/03/2026, 10:55 am - Mahesh Sir: Chisy tost with andha paratha
+11/03/2026, 11:34 am - Ritik Sir Rxpl: GJJJBB👍
+11/03/2026, 2:17 pm - Ritik Sir Rxpl: <Media omitted>
+11/03/2026, 6:13 pm - Ritik Sir Rxpl: <Media omitted>
+11/03/2026, 6:14 pm - Ritik Sir Rxpl: <Media omitted>
+11/03/2026, 6:18 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+11/03/2026, 6:26 pm - Sandeep Sir Rxpl: Sir wahi h fatak p
+11/03/2026, 6:28 pm - Ritik Sir Rxpl: <Media omitted>
+11/03/2026, 9:09 pm - Sandeep Sir Rxpl: <Media omitted>
+11/03/2026, 9:11 pm - Aakash Sir Response Express: Good
+11/03/2026, 9:21 pm - Sandeep Sir Rxpl: <Media omitted>
+12/03/2026, 1:14 pm - Sandeep Sir Rxpl: KHANA
+12/03/2026, 1:15 pm - Sandeep Sir Rxpl: @⁨Vishnu Dixit Rx Dixit Rx⁩ @⁨Aakash Sir Response Express⁩
+12/03/2026, 2:02 pm - Ritik Sir Rxpl: Amit Sir-आकृति, मैं तुम्हें बता रहा हूँ कि इन सब के पास काम नहीं है। हम दोनों अगर ना आएं ना, तो ये लोग काम ही ना करें
+
+@⁨Aakash Sir Response Express⁩ @⁨Vishnu Dixit Rx Dixit Rx⁩
+12/03/2026, 2:04 pm - Vishnu Dixit Rx Dixit Rx: 😂😂😂
+12/03/2026, 2:31 pm - Naveen Sir Rxpl: <Media omitted>
+12/03/2026, 2:31 pm - Naveen Sir Rxpl: <Media omitted>
+12/03/2026, 2:31 pm - Naveen Sir Rxpl: <Media omitted>
+12/03/2026, 2:31 pm - Naveen Sir Rxpl: <Media omitted>
+12/03/2026, 2:31 pm - Naveen Sir Rxpl: <Media omitted>
+12/03/2026, 2:31 pm - Naveen Sir Rxpl: Dwarka Sec3 matiyala fish market
+12/03/2026, 4:57 pm - Aakash Sir Response Express: <Media omitted>
+12/03/2026, 5:01 pm - Aakash Sir Response Express: <Media omitted>
+12/03/2026, 5:11 pm - Aakash Sir Response Express: <Media omitted>
+12/03/2026, 6:54 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+12/03/2026, 6:54 pm - Sandeep Sir Rxpl: ek kaam kao tum log mera lund khaa lo esa hi dikhta hai same
+12/03/2026, 6:55 pm - Sandeep Sir Rxpl: <Media omitted>
+12/03/2026, 7:02 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+12/03/2026, 7:09 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+16/03/2026, 1:05 pm - Kanaiya Bhai Rxpl: MAI BHOSDI WALA HU GANDU HU
+16/03/2026, 1:05 pm - Kanaiya Bhai Rxpl: MADAR CHOOD HU
+16/03/2026, 1:05 pm - Kanaiya Bhai Rxpl: MERI GAND MAAR LO
+16/03/2026, 1:06 pm - Kanaiya Bhai Rxpl: OFFICE ME JO KALESH CHAL RH AHAI USME PURI MERI JIMMEDARI HAI
+16/03/2026, 1:06 pm - Kanaiya Bhai Rxpl: EK NO KA BHADWA HU MAI
+16/03/2026, 1:07 pm - Kanaiya Bhai Rxpl: PTA NHI KITNE GANDU MARE HONGE TAB MAI EK MAHA GANDU PAIDA HUA HU
+16/03/2026, 1:07 pm - Kanaiya Bhai Rxpl: MAI MADAR CHOOD HU JO RESPOSE ME AYA
+16/03/2026, 1:08 pm - Vishnu Dixit Rx Dixit Rx: Are kanhyiya tu hamahara bhai hai aese na bol
+16/03/2026, 1:08 pm - Vishnu Dixit Rx Dixit Rx: Tu bhut achha achha hai
+16/03/2026, 1:08 pm - Vishnu Dixit Rx Dixit Rx: Ba time to time gand de de
+16/03/2026, 1:14 pm - Ritik Sir Rxpl: Wahhh kya baat bol di
+
+Dil khush ho gaya
+16/03/2026, 1:14 pm - Ritik Sir Rxpl: 🤣🤣🤣🤣
+16/03/2026, 2:04 pm - Ritik Sir Rxpl: yei sare bande laptop ready krege kya
+16/03/2026, 2:04 pm - Ritik Sir Rxpl: 3-3 bande aa rakhe hai upr interview ke liye
+17/03/2026, 5:17 pm - Ritik Sir Rxpl: <Media omitted>
+17/03/2026, 6:03 pm - Naveen Sir Rxpl: <Media omitted>
+18/03/2026, 9:02 pm - Ritik Sir Rxpl: <Media omitted>
+18/03/2026, 9:03 pm - Aakash Sir Response Express: Kis cheez ka
+18/03/2026, 9:04 pm - Ritik Sir Rxpl: Dhurandhar 2 movie ka
+18/03/2026, 9:04 pm - Ritik Sir Rxpl: <Media omitted>
+20/03/2026, 12:33 pm - Vishnu Dixit Rx Dixit Rx: 1 baje khana khaenge
+20/03/2026, 12:34 pm - Ritik Sir Rxpl: 1 baje tu gaand dega
+20/03/2026, 12:36 pm - Vishnu Dixit Rx Dixit Rx: Haa
+20/03/2026, 1:59 pm - Ritik Sir Rxpl: https://www.instagram.com/reel/DV4vxQ_E3qn/?igsh=MTNwZGcyYzJtY3hyeQ==
+20/03/2026, 5:07 pm - Naveen Sir Rxpl: <Media omitted>
+20/03/2026, 8:52 pm - Sandeep Sir Rxpl: This message was deleted
+20/03/2026, 8:52 pm - Sandeep Sir Rxpl: This message was deleted
+20/03/2026, 8:53 pm - Sandeep Sir Rxpl: POLL:
+KACHORI 30 RS 
+OPTION: CHAHIYE I WILL PAY (1 vote)
+OPTION: ME GANDU HU (2 votes)
+
+20/03/2026, 8:53 pm - Sandeep Sir Rxpl: @⁨all⁩
+21/03/2026, 8:26 am - Sandeep Sir Rxpl: Thand gand fad ho rahi hai
+21/03/2026, 11:37 am - Aakash Sir Response Express: Guys
+21/03/2026, 11:37 am - Aakash Sir Response Express: @⁨Mahesh Sir⁩ in billing
+21/03/2026, 11:37 am - Sandeep Sir Rxpl: Wow
+21/03/2026, 11:38 am - Ritik Sir Rxpl: or mahesh ka kaam kaun karega
+21/03/2026, 11:38 am - Aakash Sir Response Express: Hentai wapas aa gya
+21/03/2026, 11:38 am - Ritik Sir Rxpl: sahi hain
+21/03/2026, 11:38 am - Ritik Sir Rxpl: hentai kom bol naan laane aaj lunch me
+isi baat pe
+21/03/2026, 11:39 am - Sandeep Sir Rxpl: Kya likh rahe ho tum log
+21/03/2026, 11:39 am - Sandeep Sir Rxpl: Ache se likho taki samjh me aye
+21/03/2026, 11:41 am - Aakash Sir Response Express: Bhai
+21/03/2026, 11:42 am - Aakash Sir Response Express: Hentai or Mahesh will looking billing department
+21/03/2026, 11:43 am - Sandeep Sir Rxpl: Wow
+21/03/2026, 11:43 am - Sandeep Sir Rxpl: And bcpl fowd
+21/03/2026, 11:43 am - Sandeep Sir Rxpl: Fwd
+21/03/2026, 11:43 am - Kanaiya Bhai Rxpl: @⁨Mahesh Sir⁩ you validat rate
+21/03/2026, 11:43 am - Ritik Sir Rxpl: or tu tick marega 😂😂😂😂😂
+21/03/2026, 11:44 am - Sandeep Sir Rxpl: BUS KARO AAB KAM PE DHYAN DO
+21/03/2026, 2:00 pm - Ritik Sir Rxpl: <Media omitted>
+21/03/2026, 2:00 pm - Aakash Sir Response Express: <Media omitted>
+21/03/2026, 2:00 pm - Ritik Sir Rxpl: <Media omitted>
+22/03/2026, 8:06 am - Ritik Sir Rxpl: <Media omitted>
+23/03/2026, 6:34 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+23/03/2026, 6:34 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+23/03/2026, 6:34 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+23/03/2026, 6:34 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+24/03/2026, 8:56 am - Aakash Sir Response Express: <Media omitted>
+24/03/2026, 9:02 am - Aakash Sir Response Express: <Media omitted>
+24/03/2026, 12:45 pm - Ritik Sir Rxpl: Main ek number ka madarchod hu
+24/03/2026, 12:45 pm - Ritik Sir Rxpl: Bohot bada wala bhen ka loda hu <This message was edited>
+24/03/2026, 12:45 pm - Ritik Sir Rxpl: Main apni gaand pitwata hu sector 8, Samalkha Crossing, NSG ke pass
+24/03/2026, 12:46 pm - Ritik Sir Rxpl: Pit pit kar meri gaand moti ho gayi h
+24/03/2026, 12:46 pm - Ritik Sir Rxpl: Chooche bhi pilpile ho gaye hain
+24/03/2026, 12:46 pm - Ritik Sir Rxpl: Ek makkhan mulayam
+24/03/2026, 12:46 pm - Ritik Sir Rxpl: Hai koi @⁨all⁩ mai ka laal ko mujhe pel paye
+24/03/2026, 12:49 pm - Sandeep Sir Rxpl: <Media omitted>
+24/03/2026, 1:01 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+24/03/2026, 1:01 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+24/03/2026, 6:52 pm - Ritik Sir Rxpl: <Media omitted>
+24/03/2026, 6:54 pm - Vishnu Dixit Rx Dixit Rx: This message was deleted
+24/03/2026, 6:55 pm - Vishnu Dixit Rx Dixit Rx: Gand de jata mujhe
+24/03/2026, 6:55 pm - Ritik Sir Rxpl: Ise smy ghr pahuchne ka mja hi kuch or hain
+25/03/2026, 1:29 pm - Sandeep Sir Rxpl: Khana ???
+25/03/2026, 1:31 pm - Sandeep Sir Rxpl: @⁨Vishnu Dixit Rx Dixit Rx⁩
+26/03/2026, 1:33 pm - Ritik Sir Rxpl: <Media omitted>
+26/03/2026, 7:03 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:03 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:03 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:03 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:03 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:03 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:03 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:03 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:04 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:04 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:04 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:04 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:05 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:05 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:05 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:05 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:05 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:06 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:06 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:06 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:06 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:07 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:07 pm - Naveen Sir Rxpl: This message was deleted
+26/03/2026, 7:07 pm - Naveen Sir Rxpl: This message was deleted
+27/03/2026, 7:02 pm - Sandeep Sir Rxpl: <Media omitted>
+27/03/2026, 7:02 pm - Aakash Sir Response Express: Lauda
+27/03/2026, 7:03 pm - Aakash Sir Response Express: Cylinder se jo paise kamaye hain wo yahan jayenge
+27/03/2026, 7:09 pm - Sandeep Sir Rxpl: Jumla hai yeh
+27/03/2026, 7:09 pm - Sandeep Sir Rxpl: 2 rs kam karega fir 10 rs bad jayega
+27/03/2026, 7:10 pm - Aakash Sir Response Express: Hn
+27/03/2026, 9:44 pm - Vishnu Dixit Rx Dixit Rx: 
+28/03/2026, 9:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 9:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 9:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 9:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 9:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 9:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 9:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 9:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 9:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 9:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 9:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 9:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 9:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 9:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 9:50 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 9:52 pm - Vishnu Dixit Rx Dixit Rx: Anytime Fitness
+Dwarka Block H, F620, Delhi, 110075, DL, IN
+https://www.anytimefitness.co.in/gyms/in-1064/delhi-delhi-110075/
+28/03/2026, 9:57 pm - Aakash Sir Response Express: Bhai kya amount bataya
+28/03/2026, 9:59 pm - Vishnu Dixit Rx Dixit Rx: 1/shot 2000
+2/shot 3500
+3/ shot 5000
+4 shot full night 7000
+28/03/2026, 9:59 pm - Aakash Sir Response Express: Bohot expensive h yr
+28/03/2026, 10:00 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+28/03/2026, 10:01 pm - Ritik Sir Rxpl: 👆🏻👍🏻
+28/03/2026, 10:01 pm - Aakash Sir Response Express: Oh
+28/03/2026, 10:01 pm - Aakash Sir Response Express: Sale loot lenge Hume waga bulker
+28/03/2026, 10:01 pm - Ritik Sir Rxpl: 🖤
+28/03/2026, 10:02 pm - Vishnu Dixit Rx Dixit Rx: Jeeb se nhi cheen lenge
+28/03/2026, 10:03 pm - Vishnu Dixit Rx Dixit Rx: Bhosdi ke dil toh aese bna rhe ho jese bibi ho tum
+Sabki
+28/03/2026, 10:03 pm - Aakash Sir Response Express: <Media omitted>
+28/03/2026, 10:03 pm - Aakash Sir Response Express: <Media omitted>
+28/03/2026, 10:03 pm - Aakash Sir Response Express: <Media omitted>
+28/03/2026, 10:03 pm - Aakash Sir Response Express: <Media omitted>
+28/03/2026, 10:03 pm - Vishnu Dixit Rx Dixit Rx: Dekhte hai Monday ko chalenge
+28/03/2026, 10:04 pm - Vishnu Dixit Rx Dixit Rx: Ek baar toh jake dekhna he padega
+28/03/2026, 10:04 pm - Vishnu Dixit Rx Dixit Rx: Bina jaye toh nhi pata chalega
+28/03/2026, 10:05 pm - Aakash Sir Response Express: Hn yr
+28/03/2026, 10:05 pm - Aakash Sir Response Express: Ye bhi h
+28/03/2026, 10:09 pm - Vishnu Dixit Rx Dixit Rx: 7 ko chale kya
+28/03/2026, 10:09 pm - Vishnu Dixit Rx Dixit Rx: 😂😂
+28/03/2026, 10:09 pm - Aakash Sir Response Express: Nhi yr
+28/03/2026, 10:09 pm - Vishnu Dixit Rx Dixit Rx: 7 ko salary aegi
+28/03/2026, 10:09 pm - Aakash Sir Response Express: Emi ki badi tension h soch raha hu hath se hi kaam chala lu
+28/03/2026, 10:10 pm - Vishnu Dixit Rx Dixit Rx: Mai jauga mere sath chal
+Lena
+28/03/2026, 10:10 pm - Vishnu Dixit Rx Dixit Rx: Mai or gannu
+29/03/2026, 6:31 am - Ritik Sir Rxpl: Mai full night 🌃🌉
+29/03/2026, 11:44 am - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+29/03/2026, 11:53 am - Ritik Sir Rxpl: Jimbeam le lena
+29/03/2026, 12:02 pm - Vishnu Dixit Rx Dixit Rx: Ok
+29/03/2026, 12:37 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+29/03/2026, 12:43 pm - Aakash Sir Response Express: @⁨Vishnu Dixit Rx Dixit Rx⁩ hume wapas ate samay 10-10.30 baj jayenge kyu Pillo peet de kya ? 
+Ramphal chowk 🤣
+29/03/2026, 12:43 pm - Aakash Sir Response Express: <Media omitted>
+29/03/2026, 12:48 pm - Vishnu Dixit Rx Dixit Rx: Idea achha hai
+29/03/2026, 2:00 pm - Aakash Sir Response Express: Main 3.30-3.45 tak pahuch jaunga
+29/03/2026, 2:00 pm - Aakash Sir Response Express: Abhi nikla RML hospital se
+29/03/2026, 3:09 pm - Aakash Sir Response Express: live location shared
+29/03/2026, 12:05 pm - Sandeep Sir Rxpl: 
+29/03/2026, 10:35 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+29/03/2026, 10:35 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+29/03/2026, 10:35 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+29/03/2026, 10:35 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+29/03/2026, 10:35 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+29/03/2026, 10:35 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+29/03/2026, 10:35 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+29/03/2026, 10:35 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+29/03/2026, 10:35 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+29/03/2026, 10:56 pm - Aakash Sir Response Express: Reached
+30/03/2026, 9:35 am - Ritik Sir Rxpl: 💗
+30/03/2026, 11:23 am - Aakash Sir Response Express: Sandeep
+30/03/2026, 11:23 am - Aakash Sir Response Express: Photos bhej de bhai
+30/03/2026, 1:30 pm - Sandeep Sir Rxpl: rOTI
+30/03/2026, 1:30 pm - Sandeep Sir Rxpl: lunch
+30/03/2026, 1:30 pm - Ritik Sir Rxpl: 1:35 me bola hai akash ne
+30/03/2026, 1:30 pm - Sandeep Sir Rxpl: @⁨Aakash Sir Response Express⁩ @⁨Vishnu Dixit Rx Dixit Rx⁩
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: 
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: 
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: <Media omitted>
+30/03/2026, 2:07 pm - Sandeep Sir Rxpl: 👍
+31/03/2026, 4:31 pm - Naveen Sir Rxpl: <Media omitted>
+01/04/2026, 8:28 am - Sandeep Sir Rxpl: <Media omitted>
+01/04/2026, 11:07 am - Aakash Sir Response Express: Bohot khoob
+01/04/2026, 11:07 am - Aakash Sir Response Express: Bohot ghaate m h company
+01/04/2026, 11:19 am - Vishnu Dixit Rx Dixit Rx: 2 bhaje khana lhaenge
+01/04/2026, 11:24 am - Aakash Sir Response Express: Ok
+01/04/2026, 12:26 pm - Naveen Sir Rxpl: <Media omitted>
+01/04/2026, 4:28 pm - Aakash Sir Response Express: Hi
+01/04/2026, 8:28 pm - Aakash Sir Response Express: Photo📷
+01/04/2026, 8:29 pm - Vishnu Dixit Rx Dixit Rx: Bsdk
+01/04/2026, 8:30 pm - Aakash Sir Response Express: Tumhe kya laga madarchod
+01/04/2026, 8:30 pm - Aakash Sir Response Express: Photo hai
+01/04/2026, 8:30 pm - Aakash Sir Response Express: <Media omitted>
+01/04/2026, 8:30 pm - Aakash Sir Response Express: <Media omitted>
+01/04/2026, 8:30 pm - Vishnu Dixit Rx Dixit Rx: Nhi bhosdi wale
+01/04/2026, 8:30 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+01/04/2026, 9:27 pm - Aakash Sir Response Express: <Media omitted>
+03/04/2026, 12:37 pm - Vishnu Dixit Rx Dixit Rx: Khana mat kha lena mere bina
+03/04/2026, 12:37 pm - Vishnu Dixit Rx Dixit Rx: A rha hu mai
+03/04/2026, 12:37 pm - Vishnu Dixit Rx Dixit Rx: live location shared
+03/04/2026, 3:02 pm - Aakash Sir Response Express: <Media omitted>
+03/04/2026, 9:20 pm - Sandeep Sir Rxpl: <Media omitted>
+03/04/2026, 9:20 pm - Sandeep Sir Rxpl: Come baby
+03/04/2026, 9:24 pm - Sandeep Sir Rxpl: <Media omitted>
+03/04/2026, 9:42 pm - Aakash Sir Response Express: Ye hai asli life 😍
+03/04/2026, 9:50 pm - Aakash Sir Response Express: <Media omitted>
+03/04/2026, 9:59 pm - Aakash Sir Response Express: Ye sb to thik h 
+Ye madarchod randi k chude 4.5k log live dekh rahe h
+04/04/2026, 8:39 am - Vishnu Dixit Rx Dixit Rx: Kich khane ke liye le ana
+04/04/2026, 8:39 am - Vishnu Dixit Rx Dixit Rx: Koi
+04/04/2026, 8:39 am - Vishnu Dixit Rx Dixit Rx: @⁨Ritik Sir Rxpl⁩ @⁨Sandeep Sir Rxpl⁩
+04/04/2026, 2:05 pm - Ritik Sir Rxpl: <Media omitted>
+04/04/2026, 10:48 pm - Sandeep Sir Rxpl: <Media omitted>
+06/04/2026, 1:18 pm - Sandeep Sir Rxpl: Khana khaa lo
+06/04/2026, 1:18 pm - Sandeep Sir Rxpl: @⁨Vishnu Dixit Rx Dixit Rx⁩ @⁨Aakash Sir Response Express⁩
+06/04/2026, 1:19 pm - Sandeep Sir Rxpl: 1:30 Pe
+06/04/2026, 1:19 pm - Aakash Sir Response Express: 1.30
+06/04/2026, 1:21 pm - Vishnu Dixit Rx Dixit Rx: Mujhe late hoga
+06/04/2026, 1:23 pm - Naveen Sir Rxpl: Lotan k chole khulche
+06/04/2026, 1:23 pm - Naveen Sir Rxpl: chole
+06/04/2026, 1:23 pm - Naveen Sir Rxpl: chawal
+06/04/2026, 1:23 pm - Naveen Sir Rxpl: halwaa
+06/04/2026, 1:23 pm - Naveen Sir Rxpl: ajao
+06/04/2026, 1:23 pm - Naveen Sir Rxpl: bhai sab
+06/04/2026, 1:24 pm - Ritik Sir Rxpl: 01:30 TK MAALL LUTT JAYEGA
+07/04/2026, 3:33 pm - Naveen Sir Rxpl: .vcf (file attached)
+07/04/2026, 3:36 pm - Naveen Sir Rxpl: 90138 69536
+07/04/2026, 3:41 pm - Naveen Sir Rxpl: मध्य प्रदेश के मुख्यमंत्री, मंत्रियों  और उनसे जुड़े अधिकारियों के फोन नंबर -
+
+डॉ मोहन यादव 
+मुख्यमंत्री 
+मोबाइल नंबर 9300915151, 94250 92255
+ओएसडी महेश चंद्र चौधरी 9425802003
+एसपी सीएम सिक्योरिटी समीर यादव 9425162741
+डिप्टी सेक्रेट्री हृदेश श्रीवास्तव 9425710184
+सहायक ग्रेड 2 अनिल यादव 9425028128
+मनीष सोनी 9424235353
+सुरक्षा अधिकारी संजीव जाटव 9827648662
+
+राजेंद्र शुक्ला ,उपमुख्यमंत्री, लोक स्वास्थ्य एवं परिवार कल्याण विभाग मोबाइल 9425185650 7000376128
+पीए आनंद भट्ट 9425667564, तिलक वर्मा 9425672590
+ओएसडी धीरज शुक्ला 9131292066
+सुरक्षा अधिकारी शारदा प्रसाद 8 770897463
+
+जगदीश देवड़ा 
+उपमुख्यमंत्री, वाणिज्यिक वित्त योजना सांख्यिकीय विभाग
+मोबाइल 9425303883, 8720056633
+विशेष सहायक डॉक्टर दिलीप राज द्विवेदी 94253041,
+पीए अशोक दहाड़े 9425004455,
+देवेंद्र मालवीय 9893381636
+सुरक्षा अधिकारी अजय सिंह भदोरिया 8319092332, राजेश कुशवाहा 8770871427,
+पीआरओ संतोष मिश्रा 9425004177
+
+कैलाश विजयवर्गीय 
+मंत्री नगरीय विकास एवं आवास संसदीय कार्य
+मोबाइल 94256000001, 9893100001
+विशेष सहायक अंशुल खरे 9131645130
+ओएसडी हरीश गुप्ता 9425491622
+पीए प्रशांत सरीन 8447779007,
+रवि विजयवर्गीय 9 826028946
+नितिन गुप्ता 9111116944
+सुरक्षा अधिकारी पर्वत सिंह 9039588837
+प्रदीप शर्मा 9425346442
+
+प्रहलाद पटेल 
+मंत्री पंचायत एवं ग्रामीण विकास
+मोबाइल 9425149241
+विशेष सहायक चंद्र प्रकाश पटेल 8319353516
+पीए कप्तान सिंह यादव 9826522 740,
+विक्रम सेन 7999530976,
+पुष्पेंद्र पटेल 9691920 225
+सुरक्षा अधिकारी प्रभात नायक 9425346556 घनश्याम सिंह 9165236758
+
+करण सिंह वर्मा 
+मंत्री राजस्व विभाग
+मोबाइल 7222901100, 9343191844
+विशेष सहायक विष्णु यादव 9993064486
+ओएसडी विनय गुप्ता 9406902776
+पीए नंदकिशोर विजयवर्गीय 7566629342
+कमल महोरे 8889759121
+अवधेश सेन 9753607926
+सुरक्षा अधिकारी आरपी तिवारी 9691173522
+ऋषभ तोमर 7974293457
+
+राकेश सिंह
+मंत्री लोक निर्माण विभाग
+मोबाइल 9425150851
+विशेष सहायक राहुल सिंह 9977106333
+पीए मनीष सिंह 9425375804
+अजय श्रीवास्तव 9425055707
+सुरक्षा अधिकारी भागवत झरिया
+9425310290, प्रमोद सिंह 7000312626
+
+राव उदय प्रताप सिंह 
+मंत्री  शिक्षा एवं परिवहन
+मोबाइल 9425168755
+पीए वीरेंद्र तिवारी 8839210766
+दीप सिंह 9424964400
+सुशील पचौरी 9589229263
+सुरक्षा अधिकारी रविंद्र तिवारी 9301070855
+
+विश्वास सारंग 
+मंत्री खेल एवं युवक कल्याण और सहकारिता विभाग मोबाइल 9329376625, 9425030344
+ओएसडी संजय भटनागर मोबाइल 9425609045
+पीए महेंद्र गुप्ता 9425366318
+मुकेश लोधी 9893312466
+हिमांशु मिश्रा 9889878755
+सौरभ पूनीवाल 8770241667
+
+तुलसी सिलावट 
+मंत्री जल संसाधन,मछुआ कल्याण तथा मत्स्य
+मोबाइल 94250 64474, 9826099964
+ओएसडी निशांत तिवारी 94256 80942
+पीए राजीव सक्सेना 9425030161
+एसएस चौहान 9827274807
+सुरक्षा अधिकारी गणेश जोशी 9826181205
+
+गोविंद सिंह राजपूत 
+मंत्री खाद्य नागरिक आपूर्ति उपभोक्ता संरक्षण
+मोबाइल 7000419180, 9425171171
+ओएसडी संजय सिसोदिया 94245 34161
+निज सचिव पीएस राठौड़ 7974352635,
+एके कादरी 9425080715
+पीए आर अवस्थी 9426092246
+अवधेश सेन 7587908879
+सुरक्षा अधिकारी आकाश राय 8871461804
+07/04/2026, 6:32 pm - Aakash Sir Response Express: <Media omitted>
+07/04/2026, 7:03 pm - Aakash Sir Response Express: <Media omitted>
+07/04/2026, 7:04 pm - Aakash Sir Response Express: 😞
+07/04/2026, 7:55 pm - Ritik Sir Rxpl: <Media omitted>
+07/04/2026, 7:55 pm - Ritik Sir Rxpl: <Media omitted>
+07/04/2026, 8:26 pm - Aakash Sir Response Express: Office m hi h tu
+08/04/2026, 12:17 pm - Ritik Sir Rxpl: <Media omitted>
+09/04/2026, 12:39 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+09/04/2026, 12:39 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+09/04/2026, 12:39 pm - Vishnu Dixit Rx Dixit Rx: Dwarka mor
+09/04/2026, 12:40 pm - Vishnu Dixit Rx Dixit Rx: 2 baje khana khana
+09/04/2026, 12:40 pm - Vishnu Dixit Rx Dixit Rx: Mai a rha hu
+09/04/2026, 12:40 pm - Aakash Sir Response Express: Ok
+09/04/2026, 12:42 pm - Vishnu Dixit Rx Dixit Rx: @⁨Sandeep Sir Rxpl⁩ chale
+09/04/2026, 12:43 pm - Sandeep Sir Rxpl: OK
+09/04/2026, 12:43 pm - Vishnu Dixit Rx Dixit Rx: Ok
+09/04/2026, 12:43 pm - Vishnu Dixit Rx Dixit Rx: Done
+09/04/2026, 12:43 pm - Vishnu Dixit Rx Dixit Rx: 4 bje nikl
+Lenge
+09/04/2026, 12:44 pm - Sandeep Sir Rxpl: OK
+09/04/2026, 1:04 pm - Vishnu Dixit Rx Dixit Rx: location: https://maps.google.com/?q=28.526460647583008,77.27691650390625
+09/04/2026, 1:37 pm - Sandeep Sir Rxpl: Kaha ho dalle
+09/04/2026, 1:38 pm - Aakash Sir Response Express: <Media omitted>
+09/04/2026, 1:38 pm - Sandeep Sir Rxpl: 👍
+09/04/2026, 2:31 pm - Naveen Sir Rxpl: <Media omitted>
+09/04/2026, 2:32 pm - Naveen Sir Rxpl: <Media omitted>
+09/04/2026, 4:09 pm - Vishnu Dixit Rx Dixit Rx: Achhi nhi hai
+09/04/2026, 9:11 pm - Ritik Sir Rxpl: <Media omitted>
+11/04/2026, 9:42 am - Sandeep Sir Rxpl: <Media omitted>
+11/04/2026, 8:21 pm - Sandeep Sir Rxpl: <Media omitted>
+11/04/2026, 8:31 pm - Vishnu Dixit Rx Dixit Rx: Bhagwan pr bharosa rkh mil
+Jaega ek din
+12/04/2026, 12:30 pm - Aakash Sir Response Express: <Media omitted>
+12/04/2026, 12:36 pm - Ritik Sir Rxpl: <Media omitted>
+12/04/2026, 12:37 pm - Vishnu Dixit Rx Dixit Rx: Tu mera land le
+12/04/2026, 9:33 pm - Vishnu Dixit Rx Dixit Rx: Mai chutti pr hu 2 din meri gamd me ungal na kare or na bina faltu ki escalation
+12/04/2026, 9:54 pm - Aakash Sir Response Express: Apne baap ko.bolo badk
+12/04/2026, 11:50 pm - Sandeep Sir Rxpl: Pickup me gand fatega sheet nahi di sab pickup wese hi pada hai
+13/04/2026, 2:45 am - Vishnu Dixit Rx Dixit Rx: Wowo
+13/04/2026, 8:07 am - Aakash Sir Response Express: Aaj hoga asli Nanga nAch
+13/04/2026, 8:21 am - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+13/04/2026, 8:21 am - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+13/04/2026, 1:13 pm - Sandeep Sir Rxpl: Khana
+13/04/2026, 1:14 pm - Ritik Sir Rxpl: 01:30
+13/04/2026, 1:14 pm - Sandeep Sir Rxpl: 👍
+14/04/2026, 1:27 pm - Sandeep Sir Rxpl: LUNCH
+14/04/2026, 6:49 pm - Ritik Sir Rxpl: This message was deleted
+14/04/2026, 7:12 pm - Aakash Sir Response Express: चूचों पर बाहरी ताक़त हाथ आज़मा रही है।
+14/04/2026, 7:14 pm - Ritik Sir Rxpl: RIGHT ANSWER
+
+YOU CLEARED CHUPASC EXAM
+14/04/2026, 11:10 pm - Harshit Mukhraiya: 
+15/04/2026, 1:16 pm - Sandeep Sir Rxpl: LUNCH
+16/04/2026, 1:31 pm - Sandeep Sir Rxpl: LUNCH
+16/04/2026, 6:19 pm - Naveen Sir Rxpl: *HAAN*
+*MAIN HOON PATNAIK*
+16/04/2026, 6:20 pm - Naveen Sir Rxpl: PITTAN CHOWK PE APNI PILLO PITWATA HU
+16/04/2026, 6:20 pm - Naveen Sir Rxpl: + SATH ME GANNE KA JUICE BHI PILATA HU
+16/04/2026, 6:21 pm - Naveen Sir Rxpl: @⁨Ritik Sir Rxpl⁩ GAAND DEDO
+17/04/2026, 6:14 pm - Vishnu Dixit Rx Dixit Rx: <Media omitted>
+17/04/2026, 7:23 pm - Aakash Sir Response Express: <Media omitted>
+17/04/2026, 7:34 pm - Harshit Mukhraiya: You deleted this message
+17/04/2026, 7:34 pm - Harshit Mukhraiya: 
+17/04/2026, 8:30 pm - Ritik Sir Rxpl: 👍🏻👍🏻
+17/04/2026, 10:00 pm - Sandeep Sir Rxpl: <Media omitted>
+18/04/2026, 9:09 pm - Ritik Sir Rxpl: <Media omitted>
+18/04/2026, 9:09 pm - Ritik Sir Rxpl: <Media omitted>
+18/04/2026, 11:15 pm - Sandeep Sir Rxpl: <Media omitted>
+18/04/2026, 11:17 pm - Aakash Sir Response Express: Waah
+18/04/2026, 11:18 pm - Sandeep Sir Rxpl: Sale web pe chal rahi hai
+18/04/2026, 11:18 pm - Sandeep Sir Rxpl: Yahi batane ke liye phone kiya thaa
+18/04/2026, 11:18 pm - Sandeep Sir Rxpl: <Media omitted>
+18/04/2026, 11:22 pm - Sandeep Sir Rxpl: <Media omitted>
+18/04/2026, 11:25 pm - Aakash Sir Response Express: Waah
+18/04/2026, 11:55 pm - Aakash Sir Response Express: <Media omitted>
+20/04/2026, 10:57 am - Kanaiya Bhai Rxpl: This message was deleted
+20/04/2026, 10:57 am - Kanaiya Bhai Rxpl: This message was deleted
+20/04/2026, 10:57 am - Kanaiya Bhai Rxpl: This message was deleted
+20/04/2026, 10:57 am - Kanaiya Bhai Rxpl: This message was deleted
+20/04/2026, 10:57 am - Kanaiya Bhai Rxpl: This message was deleted
+20/04/2026, 10:57 am - Kanaiya Bhai Rxpl: This message was deleted
+21/04/2026, 1:05 pm - Sandeep Sir Rxpl: LUCNH KAB KARNA HAI
+21/04/2026, 1:25 pm - Aakash Sir Response Express: 1.30
+21/04/2026, 3:59 pm - Sandeep Sir Rxpl: This message was deleted
+21/04/2026, 4:00 pm - Vishnu Dixit Rx Dixit Rx removed you
+`;
+
+function parseChat(text){
+    let lines=text.split("\n");
+    let data=[];
+    let regex=/^(\d{1,2}\/\d{1,2}\/\d{4}), (.*?) - (.*?): (.*)$/;
+
+    lines.forEach(line=>{
+        let m=line.match(regex);
+        if(m){
+            let [,date,time,sender,msg]=m;
+            data.push({date,time,sender,message:msg});
+        }
+    });
+    return data;
+}
+
+const CHAT_DATA=parseChat(RAW_CHAT);
+
+// DATE FORMAT
+function formatDate(dateStr){
+    let [d,m,y]=dateStr.split("/");
+    let date=new Date(y,m-1,d);
+
+    let today=new Date();
+    let yesterday=new Date();
+    yesterday.setDate(today.getDate()-1);
+
+    if(date.toDateString()===today.toDateString()) return "Today";
+    if(date.toDateString()===yesterday.toDateString()) return "Yesterday";
+
+    return date.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"short"});
+}
+
+// COUNTS
+let counts={};
+CHAT_DATA.forEach(m=>{
+    counts[m.sender]=(counts[m.sender]||0)+1;
+});
+
+// USER LIST
+const userList=document.getElementById("userList");
+Object.keys(counts).forEach(u=>{
+    let div=document.createElement("div");
+    div.className="user";
+    div.innerHTML=`${u}<span class="count">${counts[u]}</span>`;
+    div.onclick=()=>{currentUser=u;applyFilter();closeSidebar();};
+    userList.appendChild(div);
+});
+
+// RENDER
+let currentUser="All";
+const chatBox=document.getElementById("chatBox");
+
+function render(data){
+    chatBox.innerHTML="";
+    let lastDate="",lastSender="";
+
+    data.forEach(msg=>{
+
+        if(msg.date!==lastDate){
+            let d=document.createElement("div");
+            d.className="date";
+            d.innerText=formatDate(msg.date);
+            chatBox.appendChild(d);
+            lastDate=msg.date;
+            lastSender="";
+        }
+
+        let div=document.createElement("div");
+        let side=msg.sender.includes("Aakash")?"right":"left";
+
+        div.className="msg "+side;
+
+        div.innerHTML=`
+            ${msg.sender!==lastSender?`<div class="sender">${msg.sender}</div>`:""}
+            ${msg.message}
+            <span class="time">${msg.time}</span>
+        `;
+
+        chatBox.appendChild(div);
+        lastSender=msg.sender;
+    });
+
+    chatBox.scrollTop=chatBox.scrollHeight;
+}
+
+// FILTER
+function applyFilter(){
+    let keyword=document.getElementById("search").value.toLowerCase();
+
+    let filtered=CHAT_DATA.filter(m=>{
+        return (currentUser==="All"||m.sender===currentUser) &&
+               m.message.toLowerCase().includes(keyword);
+    });
+
+    render(filtered);
+}
+
+document.getElementById("search").oninput=applyFilter;
+
+render(CHAT_DATA);
+
+</script>
+
+</body>
+</html>
